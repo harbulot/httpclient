@@ -40,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -374,16 +375,12 @@ public class SSLSocketFactory implements SchemeLayeredSocketFactory,
      * @since 4.1
      */
     public Socket createSocket(final HttpParams params) throws IOException {
-        SSLSocket sock = (SSLSocket) this.socketfactory.createSocket();
-        prepareSocket(sock);
-        return sock;
+        return SocketFactory.getDefault().createSocket();
     }
 
     @Deprecated
     public Socket createSocket() throws IOException {
-        SSLSocket sock = (SSLSocket) this.socketfactory.createSocket();
-        prepareSocket(sock);
-        return sock;
+        return SocketFactory.getDefault().createSocket();
     }
 
     /**
