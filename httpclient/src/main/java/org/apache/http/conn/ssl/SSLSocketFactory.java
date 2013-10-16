@@ -400,28 +400,44 @@ public class SSLSocketFactory implements SchemeLayeredSocketFactory,
         if (params == null) {
             throw new IllegalArgumentException("HTTP parameters may not be null");
         }
-        Socket sock = socket != null ? socket : this.socketfactory.createSocket();
-        if (localAddress != null) {
-            sock.setReuseAddress(HttpConnectionParams.getSoReuseaddr(params));
-            sock.bind(localAddress);
-        }
-
-        int connTimeout = HttpConnectionParams.getConnectionTimeout(params);
-        int soTimeout = HttpConnectionParams.getSoTimeout(params);
-
-        try {
-            sock.setSoTimeout(soTimeout);
-            sock.connect(remoteAddress, connTimeout);
-        } catch (SocketTimeoutException ex) {
-            throw new ConnectTimeoutException(
-                    "Connect to " + remoteAddress + " timed out", ex);
-        }
 
         String hostname;
         if (remoteAddress instanceof HttpInetSocketAddress) {
             hostname = ((HttpInetSocketAddress) remoteAddress).getHttpHost().getHostName();
         } else {
             hostname = remoteAddress.getHostName();
+        }
+
+        int connTimeout = HttpConnectionParams.getConnectionTimeout(params);
+        int soTimeout = HttpConnectionParams.getSoTimeout(params);
+        
+        Socket sock;
+        if (socket != null) {
+            sock = socket;
+            if (localAddress != null) {
+                sock.setReuseAddress(HttpConnectionParams.getSoReuseaddr(params));
+                sock.bind(localAddress);
+            }
+        } else {
+            if (localAddress != null) {
+                sock = this.socketfactory.createSocket(hostname, remoteAddress.getPort(),
+                        localAddress.getAddress(), localAddress.getPort());
+                sock.bind(localAddress);
+            } else {
+                sock = this.socketfactory.createSocket(hostname, remoteAddress.getPort());
+            }
+            sock.setSoTimeout(soTimeout);
+            prepareSocket((SSLSocket)sock);
+        }
+
+        if (!sock.isConnected()) {
+            try {
+                sock.setSoTimeout(soTimeout);
+                sock.connect(remoteAddress, connTimeout);
+            } catch (SocketTimeoutException ex) {
+                throw new ConnectTimeoutException(
+                        "Connect to " + remoteAddress + " timed out", ex);
+            }
         }
 
         SSLSocket sslsock;

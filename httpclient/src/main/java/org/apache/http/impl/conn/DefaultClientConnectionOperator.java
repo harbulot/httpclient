@@ -165,9 +165,6 @@ public class DefaultClientConnectionOperator implements ClientConnectionOperator
             InetAddress address = addresses[i];
             boolean last = i == addresses.length - 1;
 
-            Socket sock = sf.createSocket(params);
-            conn.opening(sock, target);
-
             InetSocketAddress remoteAddress = new HttpInetSocketAddress(target, address, port);
             InetSocketAddress localAddress = null;
             if (local != null) {
@@ -177,11 +174,9 @@ public class DefaultClientConnectionOperator implements ClientConnectionOperator
                 this.log.debug("Connecting to " + remoteAddress);
             }
             try {
-                Socket connsock = sf.connectSocket(sock, remoteAddress, localAddress, params);
-                if (sock != connsock) {
-                    sock = connsock;
-                    conn.opening(sock, target);
-                }
+                Socket connsock = sf.connectSocket(null, remoteAddress, localAddress, params);
+                Socket sock = connsock;
+                conn.opening(sock, target);
                 prepareSocket(sock, context, params);
                 conn.openCompleted(sf.isSecure(sock), params);
                 return;
